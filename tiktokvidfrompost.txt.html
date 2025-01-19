@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extract and Export Links</title>
+</head>
+<body>
+    <h1>Extract "Link:" from a Text File</h1>
+    <input type="file" id="fileInput" accept=".txt">
+    <button id="processBtn">Process File</button>
+    <button id="exportBtn" style="display: none;">Export to TXT</button>
+    <h3>Extracted Links:</h3>
+    <ul id="output"></ul>
+
+    <script>
+        let extractedLinks = []; // To store extracted links globally
+
+        document.getElementById('processBtn').addEventListener('click', () => {
+            const fileInput = document.getElementById('fileInput');
+            const output = document.getElementById('output');
+            const exportBtn = document.getElementById('exportBtn');
+            output.innerHTML = ''; // Clear previous results
+            extractedLinks = []; // Reset links
+
+            if (!fileInput.files.length) {
+                alert('Please select a file first.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const lines = event.target.result.split('\n'); // Split into lines
+                lines.forEach(line => {
+                    const match = line.match(/Link:\s*(.+)/);
+                    if (match) {
+                        const link = match[1].trim();
+                        extractedLinks.push(link);
+                    }
+                });
+
+                if (extractedLinks.length > 0) {
+                    extractedLinks.forEach(link => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.href = link;
+                        a.textContent = link;
+                        a.target = "_blank"; // Opens link in a new tab
+                        li.appendChild(a);
+                        output.appendChild(li);
+                    });
+                    exportBtn.style.display = 'inline'; // Show the export button
+                } else {
+                    const li = document.createElement('li');
+                    li.textContent = 'No links found in the file.';
+                    output.appendChild(li);
+                    exportBtn.style.display = 'none'; // Hide the export button
+                }
+            };
+
+            reader.readAsText(file);
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            if (extractedLinks.length === 0) {
+                alert('No links to export.');
+                return;
+            }
+
+            const blob = new Blob([extractedLinks.join('\n')], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'extracted_links.txt'; // Filename for the exported file
+            a.click();
+            URL.revokeObjectURL(url); // Clean up the URL object
+        });
+    </script>
+</body>
+</html>
